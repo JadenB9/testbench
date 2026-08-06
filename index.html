@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>testbench — test &amp; code quality suite</title>
+<meta name="description" content="Wireframe for testbench, a unified test-run and code-quality dashboard.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%230b0b0d'/><rect x='3' y='7' width='10' height='2' fill='%23d4a050'/></svg>">
+<link rel="stylesheet" href="./css/testbench.css">
+</head>
+<body>
+
+<div class="wf-banner">
+  <span class="wf-dot"></span>
+  Wireframe — layout and interaction only. All figures below are fixture data; no test runner is connected.
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"></span>
+    <span class="brand-name">testbench</span>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="sections">
+    <button class="tab is-active" data-tab="runs" role="tab">Test runs</button>
+    <button class="tab" data-tab="quality" role="tab">Code quality</button>
+  </nav>
+
+  <div class="topbar-right">
+    <div class="repo-picker">
+      <span class="rp-label">repo</span>
+      <select id="repo-select" aria-label="repository">
+        <option>acme/payments-api</option>
+        <option>acme/web-client</option>
+        <option>acme/ingest-worker</option>
+      </select>
+    </div>
+    <span class="branch-chip"><span class="branch-icon"></span>main</span>
+  </div>
+</header>
+
+<!-- ══════════════ TEST RUNS ══════════════ -->
+<main class="pane is-active" data-pane="runs">
+  <aside class="rail">
+    <div class="rail-head">
+      <h2>Recent runs</h2>
+      <button class="icon-btn" id="btn-refresh" title="Refresh (wireframe)" aria-label="Refresh">↻</button>
+    </div>
+    <div class="run-list" id="run-list"></div>
+    <div class="rail-foot">
+      <span class="dim">showing 8 of 214</span>
+      <button class="link-btn">load more</button>
+    </div>
+  </aside>
+
+  <section class="content">
+    <!-- run header -->
+    <div class="run-head">
+      <div class="run-title">
+        <h1 id="run-title">Run #218</h1>
+        <span class="verdict" id="run-verdict">passed</span>
+      </div>
+      <div class="run-sub" id="run-sub">—</div>
+      <div class="run-actions">
+        <button class="btn">re-run failed</button>
+        <button class="btn">download log</button>
+        <button class="btn btn-primary">compare</button>
+      </div>
+    </div>
+
+    <!-- metrics -->
+    <div class="metrics" id="metrics"></div>
+
+    <!-- pass rate history -->
+    <div class="card">
+      <div class="card-head">
+        <h3>Pass rate — last 20 runs</h3>
+        <div class="legend">
+          <span class="lg"><i class="sw sw-pass"></i>passed</span>
+          <span class="lg"><i class="sw sw-fail"></i>failed</span>
+          <span class="lg"><i class="sw sw-skip"></i>skipped</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart" id="chart"></div>
+        <div class="chart-axis"><span>oldest</span><span>latest</span></div>
+      </div>
+    </div>
+
+    <div class="split">
+      <!-- suite tree -->
+      <div class="card">
+        <div class="card-head">
+          <h3>Suites</h3>
+          <div class="filter-group" id="suite-filter">
+            <button class="chip is-active" data-filter="all">all</button>
+            <button class="chip" data-filter="failed">failed</button>
+            <button class="chip" data-filter="slow">slowest</button>
+          </div>
+        </div>
+        <div class="card-body no-pad">
+          <div class="tree" id="tree"></div>
+        </div>
+      </div>
+
+      <!-- failure detail -->
+      <div class="card">
+        <div class="card-head">
+          <h3>Failure detail</h3>
+          <span class="dim" id="detail-case">auth/login.spec.ts</span>
+        </div>
+        <div class="card-body">
+          <div class="fail-meta">
+            <div><span class="k">assertion</span><span class="v">expected 401, received 200</span></div>
+            <div><span class="k">duration</span><span class="v">1.24 s</span></div>
+            <div><span class="k">retries</span><span class="v">2 of 2 failed</span></div>
+            <div><span class="k">first seen</span><span class="v">run #214</span></div>
+          </div>
+
+          <div class="code-block">
+            <div class="cb-head">expected / received</div>
+<pre>- expected
++ received
+
+- status: 401
++ status: 200
+- body.error: "token_expired"
++ body.error: undefined</pre>
+          </div>
+
+          <div class="code-block">
+            <div class="cb-head">stack trace</div>
+<pre>at Object.&lt;anonymous&gt; (tests/auth/login.spec.ts:48:23)
+at processTicksAndRejections (node:internal/process/task_queues:95:5)
+at runNextTicks (node:internal/process/task_queues:64:3)
+at listOnTimeout (node:internal/timers:540:9)</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- flaky tests -->
+    <div class="card">
+      <div class="card-head">
+        <h3>Flaky tests</h3>
+        <span class="dim">tests that changed verdict without a code change</span>
+      </div>
+      <div class="card-body no-pad">
+        <table class="table">
+          <thead>
+            <tr><th>test</th><th>suite</th><th class="num">flip rate</th><th class="num">last 20</th><th>owner</th></tr>
+          </thead>
+          <tbody id="flaky-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ══════════════ CODE QUALITY ══════════════ -->
+<main class="pane" data-pane="quality">
+  <aside class="rail">
+    <div class="rail-head"><h2>Rule sets</h2></div>
+    <div class="ruleset-list" id="ruleset-list"></div>
+    <div class="rail-foot">
+      <span class="dim">4 sets enabled</span>
+      <button class="link-btn">configure</button>
+    </div>
+  </aside>
+
+  <section class="content">
+    <div class="run-head">
+      <div class="run-title">
+        <h1>Code quality</h1>
+        <span class="verdict verdict-warn">3 blocking</span>
+      </div>
+      <div class="run-sub">analysed 412 files · 38,204 lines · scan took 6.2 s · commit <code>a4f19c2</code></div>
+      <div class="run-actions">
+        <button class="btn">export SARIF</button>
+        <button class="btn btn-primary">re-scan</button>
+      </div>
+    </div>
+
+    <div class="metrics" id="q-metrics"></div>
+
+    <div class="split">
+      <div class="card">
+        <div class="card-head">
+          <h3>Findings by severity</h3>
+        </div>
+        <div class="card-body">
+          <div class="sev-bars" id="sev-bars"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Coverage vs complexity</h3>
+          <span class="dim">bottom-right needs attention</span>
+        </div>
+        <div class="card-body">
+          <div class="scatter" id="scatter">
+            <span class="ax ax-y">coverage %</span>
+            <span class="ax ax-x">cyclomatic complexity</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Findings</h3>
+        <div class="filter-group" id="finding-filter">
+          <button class="chip is-active" data-sev="all">all</button>
+          <button class="chip" data-sev="blocker">blocker</button>
+          <button class="chip" data-sev="major">major</button>
+          <button class="chip" data-sev="minor">minor</button>
+        </div>
+      </div>
+      <div class="card-body no-pad">
+        <table class="table">
+          <thead>
+            <tr><th>severity</th><th>rule</th><th>message</th><th>file</th><th class="num">line</th></tr>
+          </thead>
+          <tbody id="findings-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Hotspots</h3>
+        <span class="dim">files ranked by churn × complexity</span>
+      </div>
+      <div class="card-body no-pad">
+        <div class="hotspots" id="hotspots"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>testbench — wireframe build</span>
+  <span class="dim">structure and interaction are real; data is fixtures</span>
+  <a href="https://github.com/JadenB9/testbench" target="_blank" rel="noopener noreferrer">source</a>
+</footer>
+
+<script src="./js/fixtures.js"></script>
+<script src="./js/testbench.js"></script>
+</body>
+</html>
