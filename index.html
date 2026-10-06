@@ -22,8 +22,8 @@
   </div>
 
   <nav class="tabs" role="tablist" aria-label="sections">
-    <button class="tab is-active" data-tab="runs" role="tab">Test runs</button>
-    <button class="tab" data-tab="quality" role="tab">Code quality</button>
+    <button class="tab is-active" id="tab-runs" data-tab="runs" role="tab" aria-selected="true" aria-controls="pane-runs">Test runs</button>
+    <button class="tab" id="tab-quality" data-tab="quality" role="tab" aria-selected="false" aria-controls="pane-quality" tabindex="-1">Code quality</button>
   </nav>
 
   <div class="topbar-right">
@@ -40,16 +40,16 @@
 </header>
 
 <!-- ══════════════ TEST RUNS ══════════════ -->
-<main class="pane is-active" data-pane="runs">
+<main class="pane is-active" id="pane-runs" data-pane="runs" role="tabpanel" aria-labelledby="tab-runs">
   <aside class="rail">
     <div class="rail-head">
       <h2>Recent runs</h2>
-      <button class="icon-btn" id="btn-refresh" title="Refresh (wireframe)" aria-label="Refresh">↻</button>
+      <button class="icon-btn" data-wf="Nothing to refresh: the run list is fixture data." title="Refresh (wireframe)" aria-label="Refresh">↻</button>
     </div>
     <div class="run-list" id="run-list"></div>
     <div class="rail-foot">
       <span class="dim">showing 8 of 214</span>
-      <button class="link-btn">load more</button>
+      <button class="link-btn" data-wf="Only the eight fixture runs exist in the wireframe.">load more</button>
     </div>
   </aside>
 
@@ -62,9 +62,9 @@
       </div>
       <div class="run-sub" id="run-sub">—</div>
       <div class="run-actions">
-        <button class="btn">re-run failed</button>
-        <button class="btn">download log</button>
-        <button class="btn btn-primary">compare</button>
+        <button class="btn" id="btn-rerun" data-wf="Re-running needs a connected runner; this is a wireframe.">re-run failed</button>
+        <button class="btn" id="btn-log">download log</button>
+        <button class="btn btn-primary" data-wf="The compare view isn't built yet.">compare</button>
       </div>
     </div>
 
@@ -74,7 +74,7 @@
     <!-- pass rate history -->
     <div class="card">
       <div class="card-head">
-        <h3>Pass rate — last 20 runs</h3>
+        <h3>Results — last 20 runs</h3>
         <div class="legend">
           <span class="lg"><i class="sw sw-pass"></i>passed</span>
           <span class="lg"><i class="sw sw-fail"></i>failed</span>
@@ -83,7 +83,7 @@
       </div>
       <div class="card-body">
         <div class="chart" id="chart"></div>
-        <div class="chart-axis"><span>oldest</span><span>latest</span></div>
+        <div class="chart-axis"><span>oldest</span><span class="dim">the last 8 are the runs on the left, click one to open it</span><span>latest</span></div>
       </div>
     </div>
 
@@ -91,7 +91,7 @@
       <!-- suite tree -->
       <div class="card">
         <div class="card-head">
-          <h3>Suites</h3>
+          <h3>Suites <span class="dim" id="suite-note"></span></h3>
           <div class="filter-group" id="suite-filter">
             <button class="chip is-active" data-filter="all">all</button>
             <button class="chip" data-filter="failed">failed</button>
@@ -107,35 +107,9 @@
       <div class="card">
         <div class="card-head">
           <h3>Failure detail</h3>
-          <span class="dim" id="detail-case">auth/login.spec.ts</span>
+          <span class="dim" id="detail-case"></span>
         </div>
-        <div class="card-body">
-          <div class="fail-meta">
-            <div><span class="k">assertion</span><span class="v">expected 401, received 200</span></div>
-            <div><span class="k">duration</span><span class="v">1.24 s</span></div>
-            <div><span class="k">retries</span><span class="v">2 of 2 failed</span></div>
-            <div><span class="k">first seen</span><span class="v">run #214</span></div>
-          </div>
-
-          <div class="code-block">
-            <div class="cb-head">expected / received</div>
-<pre>- expected
-+ received
-
-- status: 401
-+ status: 200
-- body.error: "token_expired"
-+ body.error: undefined</pre>
-          </div>
-
-          <div class="code-block">
-            <div class="cb-head">stack trace</div>
-<pre>at Object.&lt;anonymous&gt; (tests/auth/login.spec.ts:48:23)
-at processTicksAndRejections (node:internal/process/task_queues:95:5)
-at runNextTicks (node:internal/process/task_queues:64:3)
-at listOnTimeout (node:internal/timers:540:9)</pre>
-          </div>
-        </div>
+        <div class="card-body" id="detail-body" aria-live="polite"></div>
       </div>
     </div>
 
@@ -145,7 +119,7 @@ at listOnTimeout (node:internal/timers:540:9)</pre>
         <h3>Flaky tests</h3>
         <span class="dim">tests that changed verdict without a code change</span>
       </div>
-      <div class="card-body no-pad">
+      <div class="card-body no-pad table-wrap">
         <table class="table">
           <thead>
             <tr><th>test</th><th>suite</th><th class="num">flip rate</th><th class="num">last 20</th><th>owner</th></tr>
@@ -158,13 +132,13 @@ at listOnTimeout (node:internal/timers:540:9)</pre>
 </main>
 
 <!-- ══════════════ CODE QUALITY ══════════════ -->
-<main class="pane" data-pane="quality">
+<main class="pane" id="pane-quality" data-pane="quality" role="tabpanel" aria-labelledby="tab-quality">
   <aside class="rail">
     <div class="rail-head"><h2>Rule sets</h2></div>
     <div class="ruleset-list" id="ruleset-list"></div>
     <div class="rail-foot">
-      <span class="dim">4 sets enabled</span>
-      <button class="link-btn">configure</button>
+      <span class="dim" id="ruleset-count"></span>
+      <button class="link-btn" data-wf="Rule configuration isn't built yet; toggle sets above to filter.">configure</button>
     </div>
   </aside>
 
@@ -172,12 +146,12 @@ at listOnTimeout (node:internal/timers:540:9)</pre>
     <div class="run-head">
       <div class="run-title">
         <h1>Code quality</h1>
-        <span class="verdict verdict-warn">3 blocking</span>
+        <span class="verdict verdict-warn" id="q-verdict"></span>
       </div>
       <div class="run-sub">analysed 412 files · 38,204 lines · scan took 6.2 s · commit <code>a4f19c2</code></div>
       <div class="run-actions">
-        <button class="btn">export SARIF</button>
-        <button class="btn btn-primary">re-scan</button>
+        <button class="btn" id="btn-sarif">export SARIF</button>
+        <button class="btn btn-primary" data-wf="Scanning needs a connected analyser; this is a wireframe.">re-scan</button>
       </div>
     </div>
 
@@ -217,7 +191,7 @@ at listOnTimeout (node:internal/timers:540:9)</pre>
           <button class="chip" data-sev="minor">minor</button>
         </div>
       </div>
-      <div class="card-body no-pad">
+      <div class="card-body no-pad table-wrap">
         <table class="table">
           <thead>
             <tr><th>severity</th><th>rule</th><th>message</th><th>file</th><th class="num">line</th></tr>
@@ -244,6 +218,8 @@ at listOnTimeout (node:internal/timers:540:9)</pre>
   <span class="dim">structure and interaction are real; data is fixtures</span>
   <a href="https://github.com/JadenB9/testbench" target="_blank" rel="noopener noreferrer">source</a>
 </footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="./js/fixtures.js"></script>
 <script src="./js/testbench.js"></script>
