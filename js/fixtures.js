@@ -4,42 +4,59 @@
 window.FIXTURES = (() => {
   const runs = [
     { id: 218, status: "passed", branch: "main",    sha: "a4f19c2", author: "r.okafor",  when: "12 min ago",  duration: "4m 12s", passed: 486, failed: 0,  skipped: 7,  coverage: 84.2 },
-    { id: 217, status: "failed", branch: "main",    sha: "8db3e51", author: "l.moreau",  when: "1 h ago",     duration: "4m 38s", passed: 479, failed: 6,  skipped: 8,  coverage: 83.7 },
+    { id: 217, status: "failed", branch: "main",    sha: "8db3e51", author: "l.moreau",  when: "1 h ago",     duration: "4m 38s", passed: 479, failed: 6,  skipped: 8,  coverage: 83.7,
+      failedBy: { "auth": 2, "api/ledger": 1, "workers/ingest": 3 } },
     { id: 216, status: "passed", branch: "main",    sha: "10c7fa9", author: "r.okafor",  when: "3 h ago",     duration: "4m 04s", passed: 485, failed: 0,  skipped: 8,  coverage: 83.9 },
     { id: 215, status: "passed", branch: "release", sha: "cc2b840", author: "s.iyer",    when: "5 h ago",     duration: "3m 57s", passed: 484, failed: 0,  skipped: 9,  coverage: 83.4 },
-    { id: 214, status: "failed", branch: "main",    sha: "7f0aa13", author: "l.moreau",  when: "8 h ago",     duration: "5m 21s", passed: 468, failed: 15, skipped: 10, coverage: 82.8 },
+    { id: 214, status: "failed", branch: "main",    sha: "7f0aa13", author: "l.moreau",  when: "8 h ago",     duration: "5m 21s", passed: 468, failed: 15, skipped: 10, coverage: 82.8,
+      failedBy: { "auth": 5, "api/ledger": 4, "workers/ingest": 6 } },
     { id: 213, status: "passed", branch: "main",    sha: "b91d004", author: "j.tanaka",  when: "yesterday",   duration: "4m 09s", passed: 483, failed: 0,  skipped: 10, coverage: 82.9 },
     { id: 212, status: "cancelled", branch: "fix/session", sha: "5ea6cc7", author: "s.iyer", when: "yesterday", duration: "0m 42s", passed: 96, failed: 0, skipped: 397, coverage: null },
     { id: 211, status: "passed", branch: "main",    sha: "31bb7de", author: "r.okafor",  when: "2 days ago",  duration: "4m 15s", passed: 481, failed: 0,  skipped: 12, coverage: 82.6 },
   ];
 
-  // Older → newer, for the pass-rate chart.
+  // Older → newer, for the pass-rate chart. The last eight are the runs
+  // above (#211 → #218), so the chart and the rail agree.
   const history = [
-    { passed: 470, failed: 9,  skipped: 14 }, { passed: 474, failed: 5,  skipped: 12 },
-    { passed: 477, failed: 3,  skipped: 12 }, { passed: 468, failed: 14, skipped: 11 },
-    { passed: 479, failed: 0,  skipped: 11 }, { passed: 480, failed: 0,  skipped: 11 },
-    { passed: 472, failed: 8,  skipped: 12 }, { passed: 481, failed: 0,  skipped: 12 },
-    { passed: 478, failed: 4,  skipped: 11 }, { passed: 482, failed: 0,  skipped: 10 },
-    { passed: 476, failed: 6,  skipped: 10 }, { passed: 483, failed: 0,  skipped: 10 },
-    { passed: 468, failed: 15, skipped: 10 }, { passed: 484, failed: 0,  skipped: 9  },
-    { passed: 485, failed: 0,  skipped: 8  }, { passed: 479, failed: 6,  skipped: 8  },
-    { passed: 486, failed: 0,  skipped: 7  }, { passed: 483, failed: 2,  skipped: 8  },
-    { passed: 485, failed: 1,  skipped: 7  }, { passed: 486, failed: 0,  skipped: 7  },
+    { passed: 470, failed: 9,  skipped: 14 }, { passed: 474, failed: 5,  skipped: 14 },
+    { passed: 477, failed: 3,  skipped: 13 }, { passed: 468, failed: 14, skipped: 11 },
+    { passed: 482, failed: 0,  skipped: 11 }, { passed: 482, failed: 0,  skipped: 11 },
+    { passed: 473, failed: 8,  skipped: 12 }, { passed: 481, failed: 0,  skipped: 12 },
+    { passed: 478, failed: 4,  skipped: 11 }, { passed: 483, failed: 0,  skipped: 10 },
+    { passed: 477, failed: 6,  skipped: 10 }, { passed: 481, failed: 0,  skipped: 12 },
+    { passed: 481, failed: 0,  skipped: 12 }, { passed: 96,  failed: 0,  skipped: 397 },
+    { passed: 483, failed: 0,  skipped: 10 }, { passed: 468, failed: 15, skipped: 10 },
+    { passed: 484, failed: 0,  skipped: 9  }, { passed: 485, failed: 0,  skipped: 8  },
+    { passed: 479, failed: 6,  skipped: 8  }, { passed: 486, failed: 0,  skipped: 7  },
   ];
 
+  // Each suite runs the same number of tests every time; how many of them
+  // failed comes from the run's `failedBy`, and the skips drift a little
+  // run to run. The listed cases are a sample, not the whole suite.
+  // `detail` is what the failure panel shows for a failing case.
   const suites = [
     {
-      name: "auth", passed: 41, failed: 2, skipped: 1, duration: "38.4 s",
+      name: "auth", total: 44, skipped: 1, duration: "38.4 s",
       cases: [
-        { name: "login.spec.ts › rejects an expired token", status: "failed",  duration: "1.24 s" },
+        { name: "login.spec.ts › rejects an expired token", status: "failed",  duration: "1.24 s",
+          detail: {
+            assertion: "expected 401, received 200", retries: "2 of 2 failed", firstSeen: 214,
+            diff: "- expected\n+ received\n\n- status: 401\n+ status: 200\n- body.error: \"token_expired\"\n+ body.error: undefined",
+            stack: "at Object.<anonymous> (tests/auth/login.spec.ts:48:23)\nat processTicksAndRejections (node:internal/process/task_queues:95:5)\nat runNextTicks (node:internal/process/task_queues:64:3)\nat listOnTimeout (node:internal/timers:540:9)",
+          } },
         { name: "login.spec.ts › issues a session cookie",  status: "passed",  duration: "0.31 s" },
-        { name: "login.spec.ts › locks after 5 attempts",   status: "failed",  duration: "2.02 s" },
+        { name: "login.spec.ts › locks after 5 attempts",   status: "failed",  duration: "2.02 s",
+          detail: {
+            assertion: "expected status 423, received 401", retries: "1 of 2 failed", firstSeen: 214,
+            diff: "- expected\n+ received\n\n- status: 423\n+ status: 401\n- headers[\"retry-after\"]: \"900\"\n+ headers[\"retry-after\"]: undefined",
+            stack: "at Object.<anonymous> (tests/auth/login.spec.ts:91:27)\nat async Promise.all (index 4)\nat processTicksAndRejections (node:internal/process/task_queues:95:5)",
+          } },
         { name: "refresh.spec.ts › rotates refresh tokens", status: "passed",  duration: "0.44 s" },
         { name: "mfa.spec.ts › enrols a TOTP device",       status: "skipped", duration: "—" },
       ],
     },
     {
-      name: "api/payments", passed: 96, failed: 0, skipped: 2, duration: "1m 12s",
+      name: "api/payments", total: 98, skipped: 2, duration: "1m 12s",
       cases: [
         { name: "charge.spec.ts › captures an authorised charge", status: "passed", duration: "0.62 s" },
         { name: "charge.spec.ts › refuses a duplicate idempotency key", status: "passed", duration: "0.55 s" },
@@ -48,30 +65,51 @@ window.FIXTURES = (() => {
       ],
     },
     {
-      name: "api/ledger", passed: 74, failed: 1, skipped: 0, duration: "52.1 s",
+      name: "api/ledger", total: 75, skipped: 0, duration: "52.1 s",
       cases: [
         { name: "posting.spec.ts › keeps debits equal to credits", status: "passed", duration: "0.48 s" },
-        { name: "posting.spec.ts › rejects an unbalanced entry",   status: "failed", duration: "0.39 s" },
+        { name: "posting.spec.ts › rejects an unbalanced entry",   status: "failed", duration: "0.39 s",
+          detail: {
+            assertion: "expected promise to reject, it resolved", retries: "2 of 2 failed", firstSeen: 214,
+            diff: "- expected\n+ received\n\n- rejects with UnbalancedEntryError\n+ resolved { id: \"je_1042\", debit: 100.00, credit: 99.99 }",
+            stack: "at Object.<anonymous> (tests/api/ledger/posting.spec.ts:63:5)\nat processTicksAndRejections (node:internal/process/task_queues:95:5)",
+          } },
         { name: "close.spec.ts › closes a period exactly once",    status: "passed", duration: "1.85 s" },
       ],
     },
     {
-      name: "workers/ingest", passed: 58, failed: 3, skipped: 2, duration: "1m 04s",
+      name: "workers/ingest", total: 63, skipped: 2, duration: "1m 04s",
       cases: [
-        { name: "batch.spec.ts › drains the queue under backpressure", status: "failed", duration: "4.10 s" },
-        { name: "batch.spec.ts › retries a poisoned message thrice",   status: "failed", duration: "3.22 s" },
+        { name: "batch.spec.ts › drains the queue under backpressure", status: "failed", duration: "4.10 s",
+          detail: {
+            assertion: "timed out after 4000 ms waiting for queue.depth to be 0", retries: "1 of 2 failed", firstSeen: 209,
+            diff: "- expected\n+ received\n\n- queue.depth: 0\n+ queue.depth: 37",
+            stack: "at waitFor (tests/helpers/wait.ts:22:11)\nat Object.<anonymous> (tests/workers/ingest/batch.spec.ts:118:9)",
+          } },
+        { name: "batch.spec.ts › retries a poisoned message thrice",   status: "failed", duration: "3.22 s",
+          detail: {
+            assertion: "expected 3 retries, received 4", retries: "2 of 2 failed", firstSeen: 217,
+            diff: "- expected\n+ received\n\n- attempts: 3\n+ attempts: 4\n- deadLettered: true\n+ deadLettered: false",
+            stack: "at Object.<anonymous> (tests/workers/ingest/batch.spec.ts:152:30)\nat processTicksAndRejections (node:internal/process/task_queues:95:5)",
+          } },
+        { name: "parse.spec.ts › rejects an oversized batch",          status: "failed", duration: "0.51 s",
+          detail: {
+            assertion: "expected PayloadTooLarge, received SyntaxError", retries: "2 of 2 failed", firstSeen: 214,
+            diff: "- expected\n+ received\n\n- error.name: \"PayloadTooLarge\"\n+ error.name: \"SyntaxError\"",
+            stack: "at Object.<anonymous> (tests/workers/ingest/parse.spec.ts:40:18)\nat processTicksAndRejections (node:internal/process/task_queues:95:5)",
+          } },
         { name: "parse.spec.ts › tolerates a truncated payload",       status: "passed", duration: "0.28 s" },
       ],
     },
     {
-      name: "ui/checkout", passed: 132, failed: 0, skipped: 1, duration: "1m 41s",
+      name: "ui/checkout", total: 126, skipped: 1, duration: "1m 41s",
       cases: [
         { name: "cart.spec.tsx › recalculates tax on address change", status: "passed", duration: "0.92 s" },
         { name: "cart.spec.tsx › restores an abandoned cart",         status: "passed", duration: "0.77 s" },
       ],
     },
     {
-      name: "ui/components", passed: 85, failed: 0, skipped: 1, duration: "24.7 s",
+      name: "ui/components", total: 87, skipped: 2, duration: "24.7 s",
       cases: [
         { name: "button.spec.tsx › forwards a ref", status: "passed", duration: "0.06 s" },
         { name: "modal.spec.tsx › traps focus",     status: "passed", duration: "0.14 s" },
@@ -86,12 +124,13 @@ window.FIXTURES = (() => {
     { test: "restores an abandoned cart",          suite: "ui/checkout",    rate: 0.11, seq: "PPPPPPFPPPPPPPPPPFPP", owner: "j.tanaka" },
   ];
 
+  // `prefix` is the start of the rule ids a set owns; `count` is rules in the set.
   const rulesets = [
-    { name: "correctness",  count: 14, enabled: true },
-    { name: "security",     count: 6,  enabled: true },
-    { name: "performance",  count: 9,  enabled: true },
-    { name: "style",        count: 41, enabled: true },
-    { name: "accessibility",count: 0,  enabled: false },
+    { name: "correctness",  prefix: "correctness/", count: 14, enabled: true },
+    { name: "security",     prefix: "sec/",         count: 6,  enabled: true },
+    { name: "performance",  prefix: "perf/",        count: 9,  enabled: true },
+    { name: "style",        prefix: "style/",       count: 41, enabled: true },
+    { name: "accessibility",prefix: "a11y/",        count: 0,  enabled: false },
   ];
 
   const findings = [
