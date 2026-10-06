@@ -21,6 +21,16 @@ duplication, findings by severity, a coverage-versus-complexity scatter that
 flags the bottom-right quadrant, a filterable findings table, and a hotspot list
 ranked by churn × complexity.
 
+## What is real and what isn't
+
+Picking a run (in the rail or on the chart) updates every panel: suite counts
+add up to that run's totals, the failure panel follows the failing case you
+click, and a cancelled run says so. Rule-set toggles filter the findings,
+counts and severity bars. *download log* and *export SARIF* produce real files
+(a plain-text log and valid SARIF 2.1.0), built from the fixtures. Buttons that
+would need a live runner or analyser (re-run, compare, re-scan, refresh) say so
+in a short notice instead of doing nothing.
+
 ## Running it
 
 It is a static site with no build step and no dependencies.
@@ -49,7 +59,7 @@ endpoint keeps all the existing views working. The shapes it expects:
 |---|---|
 | `runs` | `{id, status, branch, sha, author, when, duration, passed, failed, skipped, coverage}` |
 | `history` | `{passed, failed, skipped}` oldest → newest |
-| `suites` | `{name, passed, failed, skipped, duration, cases[]}` |
+| `suites` | `{name, total, skipped, duration, cases[]}`; a run's `failedBy` maps suite → failures |
 | `flaky` | `{test, suite, rate, seq, owner}` |
 | `findings` | `{sev, rule, msg, file, line}` |
 | `hotspots` | `{file, churn, complexity, coverage, risk}` |
