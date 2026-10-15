@@ -3,16 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>testbench — test &amp; code quality suite</title>
-<meta name="description" content="Wireframe for testbench, a unified test-run and code-quality dashboard.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%230b0b0d'/><rect x='3' y='7' width='10' height='2' fill='%23d4a050'/></svg>">
+<title>testbench — test &amp; code quality dashboard</title>
+<meta name="description" content="testbench: a test-run and code-quality dashboard, demoed on fixture data.">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121215">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfbf9">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='1' y='1' width='14' height='14' fill='none' stroke='%23d4a050' stroke-width='1.5'/><rect x='3.5' y='7' width='9' height='2' fill='%23d4a050'/></svg>">
+<script>
+// Same theme rule as the rest of j4den.com, run before paint so there is no
+// flash: a saved choice wins, otherwise follow the device. Dark is the
+// default and carries no attribute.
+(function () {
+  try {
+    var saved = localStorage.getItem('theme');
+    if (saved === 'light' || (!saved && window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: light)').matches)) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  } catch (e) { /* private mode refuses localStorage; stay dark */ }
+})();
+</script>
 <link rel="stylesheet" href="./css/testbench.css">
 </head>
 <body>
 
-<div class="wf-banner">
-  <span class="wf-dot"></span>
-  Wireframe — layout and interaction only. All figures below are fixture data; no test runner is connected.
+<div class="demo-banner">
+  <span class="demo-dot" aria-hidden="true"></span>
+  <span>Demo — every number on this page is fixture data from <code>js/fixtures.js</code>. No test runner or analyser is connected.</span>
 </div>
 
 <header class="topbar">
@@ -36,6 +52,15 @@
       </select>
     </div>
     <span class="branch-chip"><span class="branch-icon"></span>main</span>
+    <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Switch theme" title="Switch theme">
+      <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3L17 7M7 17l-1.7 1.7"/>
+      </svg>
+      <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>
+      </svg>
+    </button>
   </div>
 </header>
 
@@ -43,13 +68,21 @@
 <main class="pane is-active" id="pane-runs" data-pane="runs" role="tabpanel" aria-labelledby="tab-runs">
   <aside class="rail">
     <div class="rail-head">
-      <h2>Recent runs</h2>
-      <button class="icon-btn" data-wf="Nothing to refresh: the run list is fixture data." title="Refresh (wireframe)" aria-label="Refresh">↻</button>
+      <h2>Runs</h2>
+      <button class="icon-btn" data-demo="Nothing to refresh: the run list is fixture data." title="Refresh" aria-label="Refresh">↻</button>
+    </div>
+    <div class="rail-tools">
+      <input class="search" id="run-search" type="search" placeholder="filter runs  /" aria-label="Filter runs by id, sha, branch, author or message" autocomplete="off" spellcheck="false">
+      <div class="filter-group" id="run-filter" role="group" aria-label="Run filter">
+        <button class="chip is-active" data-value="all">all</button>
+        <button class="chip" data-value="failed">failed</button>
+        <button class="chip" data-value="main">main</button>
+      </div>
     </div>
     <div class="run-list" id="run-list"></div>
     <div class="rail-foot">
-      <span class="dim">showing 8 of 214</span>
-      <button class="link-btn" data-wf="Only the eight fixture runs exist in the wireframe.">load more</button>
+      <span class="dim" id="run-count"></span>
+      <span class="dim">j / k to move</span>
     </div>
   </aside>
 
@@ -60,30 +93,44 @@
         <h1 id="run-title">Run #218</h1>
         <span class="verdict" id="run-verdict">passed</span>
       </div>
+      <p class="run-msg" id="run-msg"></p>
       <div class="run-sub" id="run-sub">—</div>
       <div class="run-actions">
-        <button class="btn" id="btn-rerun" data-wf="Re-running needs a connected runner; this is a wireframe.">re-run failed</button>
+        <button class="btn" id="btn-rerun" data-demo="Re-running needs a connected runner; this demo runs on fixtures.">re-run failed</button>
         <button class="btn" id="btn-log">download log</button>
-        <button class="btn btn-primary" data-wf="The compare view isn't built yet.">compare</button>
+        <button class="btn btn-primary" id="btn-details" aria-haspopup="dialog">details</button>
       </div>
     </div>
 
     <!-- metrics -->
     <div class="metrics" id="metrics"></div>
 
-    <!-- pass rate history -->
-    <div class="card">
-      <div class="card-head">
-        <h3>Results — last 20 runs</h3>
-        <div class="legend">
-          <span class="lg"><i class="sw sw-pass"></i>passed</span>
-          <span class="lg"><i class="sw sw-fail"></i>failed</span>
-          <span class="lg"><i class="sw sw-skip"></i>skipped</span>
+    <div class="split split-charts">
+      <!-- pass / fail / skip per run -->
+      <div class="card">
+        <div class="card-head">
+          <h3>Results — last 20 runs</h3>
+          <div class="legend">
+            <span class="lg"><i class="sw sw-pass"></i>passed</span>
+            <span class="lg"><i class="sw sw-fail"></i>failed</span>
+            <span class="lg"><i class="sw sw-skip"></i>skipped</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart" id="chart"></div>
+          <div class="chart-axis"><span>oldest</span><span class="dim">every column is a run, click one to open it</span><span>latest</span></div>
         </div>
       </div>
-      <div class="card-body">
-        <div class="chart" id="chart"></div>
-        <div class="chart-axis"><span>oldest</span><span class="dim">the last 8 are the runs on the left, click one to open it</span><span>latest</span></div>
+
+      <!-- coverage trend -->
+      <div class="card">
+        <div class="card-head">
+          <h3>Coverage trend</h3>
+          <span class="dim" id="coverage-note"></span>
+        </div>
+        <div class="card-body">
+          <div class="coverage" id="coverage"></div>
+        </div>
       </div>
     </div>
 
@@ -92,10 +139,10 @@
       <div class="card">
         <div class="card-head">
           <h3>Suites <span class="dim" id="suite-note"></span></h3>
-          <div class="filter-group" id="suite-filter">
-            <button class="chip is-active" data-filter="all">all</button>
-            <button class="chip" data-filter="failed">failed</button>
-            <button class="chip" data-filter="slow">slowest</button>
+          <div class="filter-group" id="suite-filter" role="group" aria-label="Suite filter">
+            <button class="chip is-active" data-value="all">all</button>
+            <button class="chip" data-value="failed">failed</button>
+            <button class="chip" data-value="slow">slowest</button>
           </div>
         </div>
         <div class="card-body no-pad">
@@ -117,7 +164,7 @@
     <div class="card">
       <div class="card-head">
         <h3>Flaky tests</h3>
-        <span class="dim">tests that changed verdict without a code change</span>
+        <span class="dim">tagged by the team · flip rate is how often the verdict changed between consecutive runs</span>
       </div>
       <div class="card-body no-pad table-wrap">
         <table class="table">
@@ -138,7 +185,7 @@
     <div class="ruleset-list" id="ruleset-list"></div>
     <div class="rail-foot">
       <span class="dim" id="ruleset-count"></span>
-      <button class="link-btn" data-wf="Rule configuration isn't built yet; toggle sets above to filter.">configure</button>
+      <button class="link-btn" data-demo="Rule configuration isn't in the demo; toggle sets above to filter.">configure</button>
     </div>
   </aside>
 
@@ -148,10 +195,10 @@
         <h1>Code quality</h1>
         <span class="verdict verdict-warn" id="q-verdict"></span>
       </div>
-      <div class="run-sub">analysed 412 files · 38,204 lines · scan took 6.2 s · commit <code>a4f19c2</code></div>
+      <div class="run-sub" id="scan-sub"></div>
       <div class="run-actions">
         <button class="btn" id="btn-sarif">export SARIF</button>
-        <button class="btn btn-primary" data-wf="Scanning needs a connected analyser; this is a wireframe.">re-scan</button>
+        <button class="btn btn-primary" data-demo="Scanning needs a connected analyser; this demo runs on fixtures.">re-scan</button>
       </div>
     </div>
 
@@ -170,7 +217,7 @@
       <div class="card">
         <div class="card-head">
           <h3>Coverage vs complexity</h3>
-          <span class="dim">bottom-right needs attention</span>
+          <span class="dim">bottom-right needs attention · hover a point for the file</span>
         </div>
         <div class="card-body">
           <div class="scatter" id="scatter">
@@ -183,16 +230,19 @@
 
     <div class="card">
       <div class="card-head">
-        <h3>Findings</h3>
-        <div class="filter-group" id="finding-filter">
-          <button class="chip is-active" data-sev="all">all</button>
-          <button class="chip" data-sev="blocker">blocker</button>
-          <button class="chip" data-sev="major">major</button>
-          <button class="chip" data-sev="minor">minor</button>
+        <h3>Findings <span class="dim" id="findings-count"></span></h3>
+        <div class="card-tools">
+          <input class="search" id="finding-search" type="search" placeholder="rule, message or file  /" aria-label="Filter findings" autocomplete="off" spellcheck="false">
+          <div class="filter-group" id="finding-filter" role="group" aria-label="Severity filter">
+            <button class="chip is-active" data-value="all">all</button>
+            <button class="chip" data-value="blocker">blocker</button>
+            <button class="chip" data-value="major">major</button>
+            <button class="chip" data-value="minor">minor</button>
+          </div>
         </div>
       </div>
       <div class="card-body no-pad table-wrap">
-        <table class="table">
+        <table class="table findings">
           <thead>
             <tr><th>severity</th><th>rule</th><th>message</th><th>file</th><th class="num">line</th></tr>
           </thead>
@@ -214,12 +264,40 @@
 </main>
 
 <footer class="footer">
-  <span>testbench — wireframe build</span>
+  <span>testbench — demo build</span>
   <span class="dim">structure and interaction are real; data is fixtures</span>
+  <button class="link-btn" id="btn-help" aria-haspopup="dialog">keyboard shortcuts</button>
   <a href="https://github.com/JadenB9/testbench" target="_blank" rel="noopener noreferrer">source</a>
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- run details drawer -->
+<dialog class="drawer" id="drawer" aria-labelledby="drawer-title">
+  <div class="drawer-head">
+    <h2 id="drawer-title">Run</h2>
+    <button class="icon-btn" id="drawer-close" type="button" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</dialog>
+
+<!-- keyboard shortcuts -->
+<dialog class="help" id="help" aria-labelledby="help-title">
+  <div class="drawer-head">
+    <h2 id="help-title">Keyboard shortcuts</h2>
+    <button class="icon-btn" id="help-close" type="button" aria-label="Close">×</button>
+  </div>
+  <dl class="keys">
+    <dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>older / newer run</dd>
+    <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>same, while the run list has focus</dd>
+    <dt><kbd>i</kbd></dt><dd>open the run's details</dd>
+    <dt><kbd>1</kbd> <kbd>2</kbd></dt><dd>test runs / code quality</dd>
+    <dt><kbd>/</kbd></dt><dd>focus the filter box</dd>
+    <dt><kbd>t</kbd></dt><dd>switch light / dark</dd>
+    <dt><kbd>?</kbd></dt><dd>this list</dd>
+    <dt><kbd>esc</kbd></dt><dd>close a panel or leave a filter box</dd>
+  </dl>
+</dialog>
 
 <script src="./js/fixtures.js"></script>
 <script src="./js/testbench.js"></script>
